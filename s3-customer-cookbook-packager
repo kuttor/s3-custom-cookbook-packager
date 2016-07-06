@@ -1,0 +1,23 @@
+#!/bin/bash -e
+# Chef-packager, version 1.1
+
+# Use: Script packages and uploads the custom Chef cookbook to s3 for Opsworks
+
+rm -rf /tmp/.berkshelf
+mkdir /tmp/.berkshelf
+export BERKSHELF_PATH=/tmp/.berkshelf
+berks install
+berks update
+mkdir -p build
+cd build
+rm -rf *
+cd ..
+berks vendor ./build
+NAME=`grep name metadata.rb | awk '{print $2}'| tr -d "'"`
+VERSION=`grep version metadata.rb | awk '{print $2}' | tr -d "'"`
+ARCHIVE=$NAME-$VERSION.zip
+cd build
+
+zip -r $ARCHIVE *
+
+aws s3 cp $ARCHIVE s3://$1/custom-cookbooks/$ARCHIVE
